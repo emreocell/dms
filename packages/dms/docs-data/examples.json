@@ -2653,7 +2653,8 @@
                     },
                     "children": []
                   },
-                  "required": true
+                  "required": true,
+                  "defaultValue": "South"
                 },
                 {
                   "id": "tilt",
@@ -2667,7 +2668,8 @@
                       "suffix": "°"
                     },
                     "children": []
-                  }
+                  },
+                  "defaultValue": 35
                 },
                 {
                   "id": "panels",
@@ -2679,6 +2681,15 @@
                       "min": 1
                     },
                     "children": []
+                  },
+                  "placeholderFrom": {
+                    "field": "orientation",
+                    "map": {
+                      "South": "14",
+                      "East": "6",
+                      "West": "6"
+                    },
+                    "fallback": "10"
                   }
                 }
               ],

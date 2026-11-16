@@ -1,4 +1,5 @@
 import type { DataTypeFormatter } from "#dms-core/app/composables/data-types/useDataType";
+import { isBoolean, isNumber, isString } from "#dms-core/app/utils/type-check";
 import type { FormFieldValue } from "../../../composables/form/types/value";
 import { cloneFormValue } from "./useFormModel";
 
@@ -36,9 +37,8 @@ export function newRepeaterRow(columns: readonly NewRowColumn[]): RepeaterRow {
 
 /** The text a cell's value is looked up by in a `map`: a scalar's, not empty. */
 function lookupKey(value: RepeaterRow[string]): string | undefined {
-  if (typeof value === "string") return value === "" ? undefined : value;
-  if (typeof value === "number" || typeof value === "boolean")
-    return String(value);
+  if (isString(value)) return value === "" ? undefined : value;
+  if (isNumber(value) || isBoolean(value)) return String(value);
   return undefined;
 }
 

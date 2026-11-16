@@ -60,6 +60,13 @@ export const typeFeatures: PlaygroundFeature[] = [
   },
   {
     area: AREA,
+    feature:
+      "Repeater rows with starting values and a placeholder from the row",
+    api: "ArrayType({ of: { key: { type, defaultValue, placeholderFrom } } })",
+    demo: FIELD_TYPES,
+  },
+  {
+    area: AREA,
     feature: "Repeater of one bare type",
     api: "ArrayType({ of: { url: new UrlType() } })",
     demo: FIELD_TYPES,

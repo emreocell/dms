@@ -103,6 +103,13 @@ describe("processFieldI18n", () => {
     });
   });
 
+  it("leaves a field without options as it is", () => {
+    const field = { id: "f", component: {} };
+    expect(processFieldI18n(field, translate)).toBe(field);
+  });
+});
+
+describe("processFieldI18n of a repeater column's placeholder rule", () => {
   it("translates the placeholders a repeater column reads from its row", () => {
     const field = processFieldI18n(
       {
@@ -137,10 +144,5 @@ describe("processFieldI18n", () => {
         },
       ],
     });
-  });
-
-  it("leaves a field without options as it is", () => {
-    const field = { id: "f", component: {} };
-    expect(processFieldI18n(field, translate)).toBe(field);
   });
 });

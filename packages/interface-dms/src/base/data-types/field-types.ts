@@ -4,6 +4,20 @@ import { DefaultDataCompareTypes } from "./compare-types";
 import type { DefaultValue } from "../types";
 import { DataType, getDataTypeId, RegisterDataType } from "./core";
 
+/**
+ * The placeholder of a field of an `ArrayType` row chosen by the value of
+ * another field of the same row: `map` gives the placeholder per value of
+ * the field `field` names (its value as text), `fallback` the one for any
+ * other value or none. Without a match nor `fallback`, the field keeps the
+ * placeholder of its type. Texts are i18n keys (`$…`) or literals.
+ */
+export interface ArrayItemPlaceholderFrom {
+  /** Key of the other field of the row. */
+  field: string;
+  map: Record<string, string>;
+  fallback?: string;
+}
+
 /** A field of the rows an `ArrayType` holds, with a column header. */
 export interface ArrayItemField {
   type: DataType;
@@ -22,10 +36,11 @@ export interface ArrayItemField {
    * `{ field: "unit", map: { hour: "80", day: "600" }, fallback?: "…" }`.
    * The value of `field`, as text, picks the entry of `map`; any other
    * value, or none, takes `fallback`, and without it the placeholder of
-   * the field's type. Applies to the inputs that show a placeholder (text,
-   * number, select); a field whose input has none ignores it.
+   * the field's type. Applies to the inputs showing a text placeholder (a
+   * text, email, phone, number, money, percentage, tags, select or relation
+   * input); any other input ignores it.
    */
-  placeholderFrom?: FormComponents.RepeaterPlaceholderFrom;
+  placeholderFrom?: ArrayItemPlaceholderFrom;
 }
 
 /** A field of an `ArrayType`'s rows: its type alone, or with a header. */
@@ -134,6 +149,22 @@ const PRESENCE_COMPARE_MODES = [
   DefaultDataCompareTypes.IsNotEmpty,
 ];
 
+/**
+ * The inputs whose placeholder is a text a repeater cell can pick from its
+ * row (`ArrayItemField.placeholderFrom`): a date or time input's is a date.
+ */
+const TEXT_PLACEHOLDER_INPUTS: ReadonlySet<string> = new Set([
+  "dms-input-text",
+  "dms-input-textarea",
+  "dms-input-email",
+  "dms-input-phone",
+  "dms-input-number",
+  "dms-input-percentage",
+  "dms-input-tags",
+  "dms-input-select",
+  "dms-input-relation",
+]);
+
 const INVALID_JSON_MESSAGE = "$dms.field_errors.invalid_json";
 
 function itemField(input: ArrayItemFieldInput): ArrayItemField {
@@ -153,7 +184,10 @@ export class ArrayType extends DataType {
     super(PRESENCE_COMPARE_MODES, undefined, { ...options });
     for (const [id, field] of this.fields()) {
       const source = field.placeholderFrom?.field;
-      if (source !== undefined && (source === id || !Object.hasOwn(options.of, source)))
+      if (
+        source !== undefined &&
+        (source === id || !Object.hasOwn(options.of, source))
+      )
         throw new Error(
           `ArrayType: placeholderFrom of "${id}" names "${source}", not another field of the row`,
         );
@@ -169,15 +203,20 @@ export class ArrayType extends DataType {
 
   protected defaultInputComponent() {
     return FormComponents.InputRepeater({
-      columns: this.fields().map(([id, field]) => ({
-        id,
-        label: field.label ?? id,
-        type: getDataTypeId(field.type),
-        component: field.type.inputComponent(),
-        required: field.required,
-        defaultValue: field.defaultValue,
-        placeholderFrom: field.placeholderFrom,
-      })),
+      columns: this.fields().map(([id, field]) => {
+        const component = field.type.inputComponent();
+        return {
+          id,
+          label: field.label ?? id,
+          type: getDataTypeId(field.type),
+          component,
+          required: field.required,
+          defaultValue: field.defaultValue,
+          placeholderFrom: TEXT_PLACEHOLDER_INPUTS.has(component.componentName)
+            ? field.placeholderFrom
+            : undefined,
+        };
+      }),
       sortable: this.options.sortable,
       min: this.options.min,
       max: this.options.max,

@@ -150,7 +150,10 @@ describe("[unit] interfaces/dms-base — ArrayType", () => {
     expect(options.sortable).to.equal(true);
     expect(options.addLabel).to.equal("Add header");
   });
-  const lines = (placeholderFrom: { field: string; map: Record<string, string> }) =>
+  const lines = (placeholderFrom: {
+    field: string;
+    map: Record<string, string>;
+  }) =>
     new DefaultDataTypes.ArrayType({
       of: {
         unit: {
@@ -182,6 +185,20 @@ describe("[unit] interfaces/dms-base — ArrayType", () => {
       ["quantity", 1, undefined],
       ["price", undefined, rule],
     ]);
+  });
+
+  it("sends no placeholder rule to an input whose placeholder is no text", () => {
+    const rule = { field: "label", map: { a: "b" } };
+    const { options } = new DefaultDataTypes.ArrayType({
+      of: {
+        label: new DefaultDataTypes.StringType(),
+        on: { type: new DefaultDataTypes.DateType(), placeholderFrom: rule },
+      },
+    }).inputComponent();
+    if (!isRepeaterOptions(options)) {
+      throw new Error("The component carries no repeater options");
+    }
+    expect(options.columns[1]?.placeholderFrom).to.equal(undefined);
   });
 
   it("refuses a placeholder rule naming no other field of the row", () => {

@@ -25,7 +25,10 @@ import {
 import type { FormEvent } from "@nuxt/ui";
 import { useEventBus } from "@vueuse/core";
 import Repeater from "../layers/dms-ui/app/components/form/components/InputRepeater.vue";
-import { FORM_FIELD_SAVED_KEY } from "../layers/dms-ui/app/composables/form/types/field-saved";
+import {
+  FORM_FIELD_SAVED_KEY,
+  type MarkFieldSaved,
+} from "../layers/dms-ui/app/composables/form/types/field-saved";
 import { repeaterCellPlaceholder } from "../layers/dms-ui/app/entries/composables/form/repeaterRows";
 import { registerDmsComponent } from "#dms/frontend-module";
 
@@ -35,14 +38,18 @@ const Cell = defineComponent({
     placeholder: { type: String, default: undefined },
   },
   emits: ["update:modelValue"],
-  setup: (props, { emit, attrs }) => () =>
-    h("input", {
-      id: attrs.id,
-      value: props.modelValue ?? "",
-      placeholder: props.placeholder,
-      onInput: (event: Event) =>
-        emit("update:modelValue", (event.target as HTMLInputElement).value),
-    }),
+  setup:
+    (props, { emit, attrs }) =>
+    () =>
+      h("input", {
+        id: attrs.id,
+        value: props.modelValue ?? "",
+        placeholder: props.placeholder,
+        onInput: (event: Event) => {
+          if (event.target instanceof HTMLInputElement)
+            emit("update:modelValue", event.target.value);
+        },
+      }),
 });
 registerDmsComponent("dms-test-cell", Cell);
 
@@ -102,7 +109,7 @@ async function mount(rows: Rows, options: { min?: number } = {}) {
   }
   vi.stubGlobal("useI18n", () => ({ t: (key: string) => key }));
   const events: string[] = [];
-  const saved: Array<[string, Rows]> = [];
+  const saved: Array<Parameters<MarkFieldSaved>> = [];
   const model = ref<Rows>(rows);
   const host = document.createElement("div");
   document.body.append(host);
@@ -123,9 +130,7 @@ async function mount(rows: Rows, options: { min?: number } = {}) {
     formFieldInjectionKey,
     computed(() => ({ name: "lines", ariaId: "lines-field" })),
   );
-  app.provide(FORM_FIELD_SAVED_KEY, (id, value) =>
-    saved.push([id, value as Rows]),
-  );
+  app.provide(FORM_FIELD_SAVED_KEY, (id, value) => saved.push([id, value]));
   app.component("UButton", Button);
   app.component("UIcon", Button);
   app.mount(host);
@@ -214,7 +219,11 @@ describe("a repeater cell's placeholder from its row", () => {
 });
 
 describe("repeaterCellPlaceholder", () => {
-  const rule = { field: "unit", map: { hour: "80", "1": "one" }, fallback: "—" };
+  const rule = {
+    field: "unit",
+    map: { hour: "80", "1": "one" },
+    fallback: "—",
+  };
 
   it("takes the fallback for another value, none, or a list", () => {
     expect(repeaterCellPlaceholder(rule, { unit: "hour" })).toBe("80");
