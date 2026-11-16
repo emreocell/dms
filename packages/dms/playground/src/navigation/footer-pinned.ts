@@ -7,8 +7,8 @@ import { Banner } from "@antelopejs/interface-dms/base";
 import { DefaultLayout } from "@antelopejs/interface-dms/base/layouts";
 
 /**
- * A root category pinned to the sidebar footer, above "Modules": it has no
- * page of its own, so it expands its pages in place there.
+ * A root category pinned to the sidebar footer, above "Modules". A root
+ * category is a `label` section, so the footer draws its heading and its pages.
  */
 export const footerPinnedCategory = RootCategory("administration", {
   displayName: "Administration",

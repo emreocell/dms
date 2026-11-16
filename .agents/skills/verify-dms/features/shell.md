@@ -68,6 +68,7 @@ The dashboard around every page: the sidebar and breadcrumb, the command palette
 ## Sub-features
 
 - `sidebar-navigation`: signing in lands on the configured homepage; a sidebar link opens its page with its breadcrumb; a reload stays on it (persistence).
+- `sidebar-footer-pinned`: the playground's Administration category declares `placement: "footer"`; its General and Integrations pages are the sidebar footer's links above Modules, the scrolling menu holds neither, and Integrations opens from the footer.
 - `command-palette-navigates`: Ctrl K, a search for "Member invitations", Enter opens the settings page.
 - `command-palette-no-match`: empty path: a search that matches nothing lists only the playground assistant's "Ask the assistant “…”" option; Enter asks it, the demo answer echoes the question, and the page stays where it was.
 - `email-renders-with-dms-layout`: the run sets no `htmlRender.renderEndpoint` and serves the dashboard on a port other than 3001; the administrator invites a member, and the captured invitation holds the HTML the dashboard rendered with the DMS e-mail layout (its inline styles, heading, button and sign-up link). It fails when `GenerateHtml` posts to a fixed `http://localhost:3001/api/html/render`: the render never reaches the dashboard and no invitation is sent.

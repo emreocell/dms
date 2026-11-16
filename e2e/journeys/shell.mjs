@@ -52,6 +52,33 @@ export const journeys = [
     },
   },
   {
+    id: "sidebar-footer-pinned",
+    title: "a category pinned to the sidebar footer sits above Modules, out of the menu, and opens its pages",
+    entryPoint: "sidebar footer (MenuOptions.placement)",
+    async run(/** @type {Ctx} */ ctx) {
+      const tab = await signedIn(ctx);
+      const footerLinks = () => tab.page.locator('[data-dms-persistent-sidebar] [data-slot="footer"] nav a').allInnerTexts();
+      const menuLinks = () => tab.page.locator('[data-dms-persistent-sidebar] [data-slot="body"] nav a').allInnerTexts();
+      await ctx.verify("the pinned pages are in the footer, above Modules, and not in the menu", [
+        ctx.equal("footer links, top to bottom", (await footerLinks()).map((text) => text.trim().split("\n")[0]), [
+          "General",
+          "Integrations",
+          "Modules",
+        ]),
+        ctx.equal(
+          "the menu lists Overview and no pinned page",
+          (await menuLinks()).map((text) => text.trim().split("\n")[0]).filter((text) => ["Overview", "General", "Integrations"].includes(text)),
+          ["Overview"],
+        ),
+      ]);
+      await tab.click({ role: "link", name: "Integrations" });
+      await ctx.verify("a pinned page opens, active in the footer", [
+        tab.at(/^\/administration\/integrations$/),
+        tab.visible({ role: "heading", name: "Integrations" }),
+      ]);
+    },
+  },
+  {
     id: "command-palette-navigates",
     title: "Ctrl K searches pages and Enter opens the first match",
     entryPoint: "command palette (Ctrl K)",
