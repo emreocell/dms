@@ -29,7 +29,7 @@ import {
   FORM_FIELD_SAVED_KEY,
   type MarkFieldSaved,
 } from "../layers/dms-ui/app/composables/form/types/field-saved";
-import { repeaterCellPlaceholder } from "../layers/dms-ui/app/build/composables/form/repeaterRows";
+import { repeaterCellPlaceholder } from "../layers/dms-ui/app/entries/composables/form/repeaterRows";
 import { registerDmsComponent } from "#dms/frontend-module";
 
 const Cell = defineComponent({
