@@ -12,35 +12,18 @@ import type { Permission } from "../permissions";
 import type { PermissionsResolverContext } from "../permissions-resolver";
 import type { Tone } from "../tones";
 import type { MaybePromise } from "../types";
+import type {
+  MenuItemParams,
+  MenuItemQuery,
+  MenuItemStatus,
+  MenuItemType,
+  MenuItemVariant,
+  MenuPlacement,
+} from "./menu-items";
 
 export type { MaybePromise };
 
-export type MenuItemType = "label" | "link";
-
-/**
- * Semantic look of a menu entry. `accent` renders the entry in the theme's
- * primary color, for call-to-action entries such as "New project".
- */
-export type MenuItemVariant = "default" | "accent";
-
-/**
- * Semantic state dot rendered at the end of a menu entry. Maps to the theme's
- * semantic colors, so a consumer never ships raw classes.
- */
-export type MenuItemStatus = "success" | "warning" | "error" | "neutral";
-
-/**
- * Where the sidebar draws a first-level menu entry. `menu`, the default, lists
- * it in the scrolling menu. `footer` pins it in the sidebar's fixed bottom
- * area, above the built-in "Back" and "Modules" entries and the user menu.
- */
-export type MenuPlacement = "menu" | "footer";
-
-/** Query parameters appended to a menu entry's link. */
-export type MenuItemQuery = Record<string, string>;
-
-/** Values for the `:name` segments of the page slug a menu entry links to. */
-export type MenuItemParams = Record<string, string>;
+export * from "./menu-items";
 
 /** Cleanup callback returned by a PageSetupFunction. Called on page unmount. */
 export type PageSetupCleanup = () => void;
@@ -306,25 +289,16 @@ export interface MenuOptions {
   badge?: string;
   /**
    * Pins the entry in the sidebar's fixed bottom area (`"footer"`) instead of
-   * the scrolling menu (`"menu"`, the default). Read on the entries drawn at
-   * the first level of the main menu: a root page or category, and an entry
-   * of a root `label` section, such as a page declared without a category.
-   * Deeper entries and a module's own pages ignore it.
+   * the scrolling menu (`"menu"`, the default). Read on the first level of the
+   * main menu: a root page or category, and an entry of a root `label`
+   * section such as `pagesCategory`. Deeper entries and module pages ignore it.
    *
-   * Footer entries sort by `order` and sit above "Back" and "Modules", on
-   * every page, inside a module too. They keep the look, the active state and
-   * the access rules of the main menu: an entry the user may not open is not
-   * drawn. A category opens as it does in the main menu: one with a page of
-   * its own links to it and lists its entries under it, one without a page
-   * expands its entries in place, and a `label` category draws its heading
-   * and its entries.
+   * Footer entries sort by `order` above "Back" and "Modules", inside a module
+   * too, with the look, active state and access rules of the menu: an entry
+   * the user may not open is not drawn. A category opens as in the menu.
    *
    * ```ts
-   * export const adminCategory = RootCategory("admin", {
-   *   displayName: "Administration",
-   *   icon: "i-ph-wrench",
-   *   placement: "footer",
-   * });
+   * RootCategory("admin", { displayName: "Admin", placement: "footer" });
    * ```
    */
   placement?: MenuPlacement;
