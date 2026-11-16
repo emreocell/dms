@@ -81,6 +81,6 @@ A second device is a second browser context signed in as the same account: `ctx.
 - Changing the password or the email signs the other sessions out, including the harness's API token; the journeys that do it replace the account's stored password, and `ctx.api` signs in again.
 - Theme, density and contrast are stored in the browser, not on the account; the keyboard layout is not stored at all and returns to the detected one on reload.
 - The Appearance tiles are visually hidden inputs; the journey ticks them with Playwright's forced check.
-- Notification email delivery is "coming soon" in the product, so only the in-app column is driven.
+- The playground registers no notification channel, so its Email column stays marked Soon and only the in-app column is driven. A registered channel (the e-mail column's switches, the `@email` preference keys, what is mailed) is covered by `src/test/integration/notification-channels.test.ts` and `frontend-vue/tests/notification-preferences-email.test.ts`.
 - Not verified: the authenticator app (TOTP) enrolment and sign-in, backup-code sign-in, Regenerate backup codes, the avatar upload, time zone, first day of the week and date format, the quick actions menu, linked sign-in providers, and the accounts switcher. None of them can be driven without a second device or an external provider.
 - `delete-account-member` leaves the Members list but keeps the member's records, as the dialog promises.
