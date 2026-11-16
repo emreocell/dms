@@ -94,7 +94,7 @@ const Navigation = defineComponent({
   setup: (props) => () =>
     h(
       "nav",
-      props.items.map((item: NavigationMenuItem) =>
+      props.items.flat().map((item: NavigationMenuItem) =>
         h(
           "a",
           { href: item.to },
