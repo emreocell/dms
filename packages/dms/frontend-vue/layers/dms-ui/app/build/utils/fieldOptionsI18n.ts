@@ -47,11 +47,36 @@ function translateNestedField(
   entry: JsonWritableObject,
   processI18n: Translate,
 ): JsonWritableObject {
-  if (!isJsonWritableObject(entry.component)) return entry;
+  const translated = isJsonWritableObject(entry.placeholderFrom)
+    ? {
+        ...entry,
+        placeholderFrom: translatePlaceholderFrom(
+          entry.placeholderFrom,
+          processI18n,
+        ),
+      }
+    : entry;
+  if (!isJsonWritableObject(translated.component)) return translated;
   return {
-    ...entry,
-    component: translateComponent(entry.component, processI18n),
+    ...translated,
+    component: translateComponent(translated.component, processI18n),
   };
+}
+
+/** A repeater column's placeholder rule, its placeholders translated. */
+function translatePlaceholderFrom(
+  rule: JsonWritableObject,
+  processI18n: Translate,
+): JsonWritableObject {
+  const translated = translateTexts(rule, ["fallback"], processI18n);
+  if (isJsonWritableObject(rule.map)) {
+    translated.map = translateTexts(
+      rule.map,
+      Object.keys(rule.map),
+      processI18n,
+    );
+  }
+  return translated;
 }
 
 function translateComponent<C extends ComponentWithOptions>(

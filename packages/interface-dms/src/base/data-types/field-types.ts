@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adaptFieldValidationSchema, FormComponents } from "../form-schema";
 import { DefaultDataCompareTypes } from "./compare-types";
+import type { DefaultValue } from "../types";
 import { DataType, getDataTypeId, RegisterDataType } from "./core";
 
 /** A field of the rows an `ArrayType` holds, with a column header. */
@@ -10,6 +11,21 @@ export interface ArrayItemField {
   label?: string;
   /** A row is refused without it. */
   required?: boolean;
+  /**
+   * The value of this field in a row the user adds, and in the rows the
+   * form opens with to reach `min`. A row is checked once edited or on
+   * submit, not the moment it appears.
+   */
+  defaultValue?: DefaultValue;
+  /**
+   * The placeholder of this field read from another field of the same row:
+   * `{ field: "unit", map: { hour: "80", day: "600" }, fallback?: "…" }`.
+   * The value of `field`, as text, picks the entry of `map`; any other
+   * value, or none, takes `fallback`, and without it the placeholder of
+   * the field's type. Applies to the inputs that show a placeholder (text,
+   * number, select); a field whose input has none ignores it.
+   */
+  placeholderFrom?: FormComponents.RepeaterPlaceholderFrom;
 }
 
 /** A field of an `ArrayType`'s rows: its type alone, or with a header. */
@@ -135,6 +151,13 @@ function itemField(input: ArrayItemFieldInput): ArrayItemField {
 export class ArrayType extends DataType {
   constructor(public readonly options: ArrayTypeOptions) {
     super(PRESENCE_COMPARE_MODES, undefined, { ...options });
+    for (const [id, field] of this.fields()) {
+      const source = field.placeholderFrom?.field;
+      if (source !== undefined && (source === id || !Object.hasOwn(options.of, source)))
+        throw new Error(
+          `ArrayType: placeholderFrom of "${id}" names "${source}", not another field of the row`,
+        );
+    }
   }
 
   private fields(): Array<[string, ArrayItemField]> {
@@ -152,6 +175,8 @@ export class ArrayType extends DataType {
         type: getDataTypeId(field.type),
         component: field.type.inputComponent(),
         required: field.required,
+        defaultValue: field.defaultValue,
+        placeholderFrom: field.placeholderFrom,
       })),
       sortable: this.options.sortable,
       min: this.options.min,

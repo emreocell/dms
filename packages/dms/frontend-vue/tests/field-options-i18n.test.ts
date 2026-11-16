@@ -103,6 +103,42 @@ describe("processFieldI18n", () => {
     });
   });
 
+  it("translates the placeholders a repeater column reads from its row", () => {
+    const field = processFieldI18n(
+      {
+        id: "f",
+        component: {
+          componentName: "dms-input-repeater",
+          options: {
+            columns: [
+              {
+                id: "price",
+                placeholderFrom: {
+                  field: "unit",
+                  map: { hour: "$per_hour", day: "600" },
+                  fallback: "$any",
+                },
+              },
+            ],
+          },
+        },
+      },
+      translate,
+    );
+    expect(field.component.options).toEqual({
+      columns: [
+        {
+          id: "price",
+          placeholderFrom: {
+            field: "unit",
+            map: { hour: "t($per_hour)", day: "600" },
+            fallback: "t($any)",
+          },
+        },
+      ],
+    });
+  });
+
   it("leaves a field without options as it is", () => {
     const field = { id: "f", component: {} };
     expect(processFieldI18n(field, translate)).toBe(field);

@@ -150,6 +150,44 @@ describe("[unit] interfaces/dms-base — ArrayType", () => {
     expect(options.sortable).to.equal(true);
     expect(options.addLabel).to.equal("Add header");
   });
+  const lines = (placeholderFrom: { field: string; map: Record<string, string> }) =>
+    new DefaultDataTypes.ArrayType({
+      of: {
+        unit: {
+          type: new DefaultDataTypes.SelectType({ items: ITEMS }),
+          defaultValue: "low",
+        },
+        quantity: {
+          type: new DefaultDataTypes.NumberType(),
+          defaultValue: 1,
+        },
+        price: { type: new DefaultDataTypes.NumberType(), placeholderFrom },
+      },
+    });
+
+  it("hands each column its new-row value and its placeholder rule", () => {
+    const rule = { field: "unit", map: { low: "10", high: "90" } };
+    const { options } = lines(rule).inputComponent();
+    if (!isRepeaterOptions(options)) {
+      throw new Error("The component carries no repeater options");
+    }
+    expect(
+      options.columns.map(({ id, defaultValue, placeholderFrom }) => [
+        id,
+        defaultValue,
+        placeholderFrom,
+      ]),
+    ).to.deep.equal([
+      ["unit", "low", undefined],
+      ["quantity", 1, undefined],
+      ["price", undefined, rule],
+    ]);
+  });
+
+  it("refuses a placeholder rule naming no other field of the row", () => {
+    expect(() => lines({ field: "vat", map: {} })).to.throw(/"vat"/);
+    expect(() => lines({ field: "price", map: {} })).to.throw(/"price"/);
+  });
 });
 
 describe("[unit] interfaces/dms-base — KeyValueType", () => {

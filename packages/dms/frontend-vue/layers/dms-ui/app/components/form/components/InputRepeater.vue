@@ -8,7 +8,14 @@ import {
 } from "@nuxt/ui/composables/useFormField";
 import { resolveDmsComponent } from "../../../composables/resolveDmsComponent";
 import DmsRepeaterTable from "./RepeaterTable.vue";
-import type { DataTypeFormatter } from "#dms-core/app/composables/data-types/useDataType";
+import type { FormFieldValue } from "../../../composables/form/types/value";
+import { FORM_FIELD_SAVED_KEY } from "../../../composables/form/types/field-saved";
+import {
+  newRepeaterRow,
+  repeaterCellPlaceholder,
+  type RepeaterPlaceholderFrom,
+  type RepeaterRow,
+} from "../../../build/composables/form/repeaterRows";
 
 /** A field of the rows: one column. */
 interface RepeaterColumn {
@@ -17,9 +24,11 @@ interface RepeaterColumn {
   type?: string;
   component: ComponentInfo;
   required?: boolean;
+  /** The cell's value in a row added or created to reach `min`. */
+  defaultValue?: FormFieldValue;
+  /** The cell's placeholder, read from another cell of its row. */
+  placeholderFrom?: RepeaterPlaceholderFrom;
 }
-
-type RepeaterRow = NonNullable<Parameters<DataTypeFormatter>[3]>;
 
 interface RepeaterProps {
   id?: string;
@@ -41,6 +50,7 @@ const { t } = useI18n();
 const { name: fieldName, emitFormChange } = useFormField();
 const formErrors = inject(formErrorsInjectionKey, null);
 const formInputs = inject(formInputsInjectionKey, null);
+const markFieldSaved = inject(FORM_FIELD_SAVED_KEY, null);
 
 const rows = computed<RepeaterRow[]>(() =>
   Array.isArray(model.value) ? model.value : [],
@@ -118,10 +128,33 @@ function setCell(
   );
 }
 
+function newRow(): RepeaterRow {
+  return newRepeaterRow(props.columns);
+}
+
 function addRow(): void {
   rowKeys.value.push(nextKey++);
-  emitRows([...rows.value, {}], false);
+  emitRows([...rows.value, newRow()], false);
 }
+
+/**
+ * Below `min`, the field gets the missing rows, each a new row, as the value
+ * it opens with: the form does not read them as a change to save.
+ */
+watch(
+  () => rows.value.length,
+  (length) => {
+    const missing = (props.min ?? 0) - length;
+    if (props.disabled || missing <= 0) return;
+    const next = [
+      ...rows.value,
+      ...Array.from({ length: missing }, () => newRow()),
+    ];
+    emitRows(next, false);
+    if (props.id) markFieldSaved?.(props.id, next);
+  },
+  { immediate: true },
+);
 
 function removeRow(index: number): void {
   rowKeys.value.splice(index, 1);
@@ -186,6 +219,13 @@ watch(
   { immediate: true },
 );
 onBeforeUnmount(() => unregisterCells(registered));
+
+/** A cell's options, with the placeholder its row picks. */
+function cellOptions(column: RepeaterColumn, row: RepeaterRow) {
+  const options = column.component.options || {};
+  const placeholder = repeaterCellPlaceholder(column.placeholderFrom, row);
+  return placeholder === undefined ? options : { ...options, placeholder };
+}
 
 function cellComponent(column: RepeaterColumn) {
   const name = column.component.componentName;
@@ -270,7 +310,7 @@ const hasHeaders = computed(() => props.columns.some((column) => column.label));
             :aria-invalid="isCellInvalid(index, column.id) || undefined"
             :color="isCellInvalid(index, column.id) ? 'error' : undefined"
             :highlight="isCellInvalid(index, column.id) || undefined"
-            v-bind="column.component.options || {}"
+            v-bind="cellOptions(column, row)"
             @update:model-value="setCell(index, column.id, $event)"
           />
         </div>

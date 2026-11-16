@@ -6,7 +6,7 @@ import "zod-to-json-schema";
 import { getDataTypeId } from "./data-types/core";
 import type { DefaultDataTypes } from "./data-types/default-types";
 import type { FormContainerPageTexts } from "./table-view/options";
-import type { AxeOrientation, EnumOption } from "./types";
+import type { AxeOrientation, DefaultValue, EnumOption } from "./types";
 import "./internal/form-block-schema";
 import {
   FormBuilder,
@@ -188,6 +188,24 @@ export namespace FormComponents {
     type?: string;
     component: ComponentInfoSerialized;
     required?: boolean;
+    /** The value of this cell in a row the user adds or `min` creates. */
+    defaultValue?: DefaultValue;
+    /** The cell's placeholder, read from another cell of its row. */
+    placeholderFrom?: RepeaterPlaceholderFrom;
+  }
+
+  /**
+   * A cell's placeholder chosen by the value of another cell of the same
+   * row: `map` gives the placeholder per value of the cell `field` names
+   * (its value as text), `fallback` the one for any other value or none.
+   * Without a match nor `fallback`, the cell keeps the placeholder of its
+   * type. Texts are i18n keys (`$…`) or literals.
+   */
+  export interface RepeaterPlaceholderFrom {
+    /** Key of the other cell of the row. */
+    field: string;
+    map: Record<string, string>;
+    fallback?: string;
   }
 
   export interface RepeaterOptions {
