@@ -30,6 +30,8 @@ export interface MenuOptions {
   variant?: MenuItemVariant;
   status?: MenuItemStatus;
   badge?: string;
+  /** `footer` pins a first-level entry in the sidebar's fixed bottom area. */
+  placement?: MenuPlacement;
   bypassTenantAccessGate?: boolean;
   /** The page's Direct / Pause valve (see `PageLiveOptions`). */
   live?: PageLiveOptions;

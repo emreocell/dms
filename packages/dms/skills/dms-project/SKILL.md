@@ -151,7 +151,9 @@ Full layer authoring: `docs/02.building/08.frontend-layer.md`.
 
 Pages and components → **antelopejs:dms-pages**; auth, permissions, tenants → **dms-auth**; backend services
 and custom Vue → the doc map in [REFERENCE.md](REFERENCE.md). Pages usually attach to a `Category`
-under the built-in `pagesCategory` (`RegisterModule` is for distributable modules). DB models use
+under the built-in `pagesCategory` (`RegisterModule` is for distributable modules). A root entry
+declared with `placement: "footer"` (a project's own settings section, say) sits in the sidebar's
+fixed bottom area above "Modules", with no Vue code. DB models use
 `@antelopejs/interface-database-decorators`; routes use `@antelopejs/interface-api`.
 
 ## Running the dev servers

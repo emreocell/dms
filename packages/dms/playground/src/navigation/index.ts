@@ -2,6 +2,7 @@ import "./dynamic-provider";
 
 export * from "./category";
 export * from "./demo-route";
+export * from "./footer-pinned";
 export * from "./new-project-page";
 export * from "./overview-page";
 export * from "./project-detail-page";

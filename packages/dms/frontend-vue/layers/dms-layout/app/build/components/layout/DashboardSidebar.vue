@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 import {
+  appendFooterLinks,
+  convertSiteLayoutTreeToFooterItems,
   convertSiteLayoutTreeToTreeItems,
   convertSiteLayoutTreeToTreeItemsForModule,
 } from "#dms-ui/app/entries/types/tree";
@@ -190,20 +192,40 @@ const items = computed((): NavigationMenuItem[][] => {
   );
 });
 
-const openCategories = ref<string[]>([]);
+const pinnedFooterItems = computed((): NavigationMenuItem[][] => {
+  if (!siteLayout.siteLayoutTree.value) {
+    return [];
+  }
 
-watch(
-  () => items.value,
-  (menuItems) => {
-    const requiredIds = collectOpenItemIds(menuItems);
-    const current = new Set(openCategories.value);
-    for (const id of requiredIds) {
-      current.add(id);
-    }
-    openCategories.value = [...current];
-  },
-  { immediate: true },
-);
+  const menuItems = convertSiteLayoutTreeToFooterItems(
+    siteLayout.siteLayoutTree.value,
+  );
+  const translatedItems = translateMenuItems(menuItems, processI18n);
+  return applyMenuRouteState(
+    translatedItems,
+    currentFullId.value,
+    currentRoute.value,
+  );
+});
+
+function trackOpenCategories(menu: () => NavigationMenuItem[][]) {
+  const open = ref<string[]>([]);
+  watch(
+    menu,
+    (menuItems) => {
+      const current = new Set(open.value);
+      for (const id of collectOpenItemIds(menuItems)) {
+        current.add(id);
+      }
+      open.value = [...current];
+    },
+    { immediate: true },
+  );
+  return open;
+}
+
+const openCategories = trackOpenCategories(() => items.value);
+const openFooterCategories = trackOpenCategories(() => pinnedFooterItems.value);
 
 const moduleCount = useInstalledModuleCount();
 
@@ -240,6 +262,13 @@ const footerItems = computed((): NavigationMenuItem[] => {
 
   return result;
 });
+
+const footerGroups = computed((): NavigationMenuItem[][] =>
+  appendFooterLinks(
+    pinnedFooterItems.value.map((group) => [...group]),
+    footerItems.value,
+  ),
+);
 </script>
 
 <template>
@@ -367,9 +396,10 @@ const footerItems = computed((): NavigationMenuItem[] => {
 
     <template #footer="{ collapsed: sidebarRail }">
       <DmsNavigationMenu
-        v-if="footerItems.length > 0"
+        v-if="footerGroups.length > 0"
+        v-model="openFooterCategories"
         :collapsed="isRail(sidebarRail)"
-        :items="footerItems"
+        :items="footerGroups"
         orientation="vertical"
         class="w-full"
       />

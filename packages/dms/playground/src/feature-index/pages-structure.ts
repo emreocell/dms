@@ -53,6 +53,12 @@ export const PAGE_FEATURES: PlaygroundFeature[] = [
   },
   {
     area: AREA,
+    feature: "A menu entry pinned to the sidebar footer",
+    api: 'MenuOptions.placement: "footer"',
+    demo: "/administration/general",
+  },
+  {
+    area: AREA,
     feature: "A static menu badge and a menu link query",
     api: "MenuOptions.badge / MenuOptions.query",
     demo: `${ACCESS}/access-custom-permission?scope=audit`,

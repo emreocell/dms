@@ -29,6 +29,13 @@ export type MenuItemVariant = "default" | "accent";
  */
 export type MenuItemStatus = "success" | "warning" | "error" | "neutral";
 
+/**
+ * Where the sidebar draws a first-level menu entry. `menu`, the default, lists
+ * it in the scrolling menu. `footer` pins it in the sidebar's fixed bottom
+ * area, above the built-in "Back" and "Modules" entries and the user menu.
+ */
+export type MenuPlacement = "menu" | "footer";
+
 /** Query parameters appended to a menu entry's link. */
 export type MenuItemQuery = Record<string, string>;
 
@@ -297,6 +304,30 @@ export interface MenuOptions {
    * status dot — the badge wins.
    */
   badge?: string;
+  /**
+   * Pins the entry in the sidebar's fixed bottom area (`"footer"`) instead of
+   * the scrolling menu (`"menu"`, the default). Read on the entries drawn at
+   * the first level of the main menu: a root page or category, and an entry
+   * of a root `label` section, such as a page declared without a category.
+   * Deeper entries and a module's own pages ignore it.
+   *
+   * Footer entries sort by `order` and sit above "Back" and "Modules", on
+   * every page, inside a module too. They keep the look, the active state and
+   * the access rules of the main menu: an entry the user may not open is not
+   * drawn. A category opens as it does in the main menu: one with a page of
+   * its own links to it and lists its entries under it, one without a page
+   * expands its entries in place, and a `label` category draws its heading
+   * and its entries.
+   *
+   * ```ts
+   * export const adminCategory = RootCategory("admin", {
+   *   displayName: "Administration",
+   *   icon: "i-ph-wrench",
+   *   placement: "footer",
+   * });
+   * ```
+   */
+  placement?: MenuPlacement;
   /**
    * Default layout of the entry and of every page and sub-category declared
    * under it that sets none of its own (`Category("billing", { category,

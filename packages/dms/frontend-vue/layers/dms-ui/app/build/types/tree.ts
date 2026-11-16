@@ -20,6 +20,9 @@ export function convertSiteLayoutTreeToTreeItems(
 
 const EXCLUDED_TOP_LEVEL_IDS = new Set(["settings", "modules"]);
 
+const isPinnedToFooter = (item: SiteLayoutTree): boolean =>
+  item.placement === "footer";
+
 function isExcludedFromRoot(item: SiteLayoutTree): boolean {
   return (
     EXCLUDED_TOP_LEVEL_IDS.has(item.id) ||
@@ -75,30 +78,101 @@ function convertToTreeItems(node: SiteLayoutTree): NavigationMenuItem[][] {
 
   for (const nodeId of node.childrenOrders) {
     const item = node.children[nodeId]!;
-    if (isExcludedFromRoot(item)) {
+    if (isExcludedFromRoot(item) || isPinnedToFooter(item)) {
       continue;
     }
 
-    const children = convertChildrenToItems(item);
-
     if (item.type === "label") {
+      const children = convertChildrenToItems(
+        item,
+        (child) => !isPinnedToFooter(child),
+      );
       if (children.length === 0) {
         continue;
       }
       groups.push(buildLabelGroup(item, children));
     } else {
-      groups.push([buildNavigationItem(item, children)]);
+      groups.push([buildNavigationItem(item, convertChildrenToItems(item))]);
     }
   }
 
   return groups;
 }
 
-function convertChildrenToItems(node: SiteLayoutTree): NavigationMenuItem[] {
+/**
+ * The entries pinned to the sidebar footer (`placement: "footer"`): the root
+ * entries and the entries of root `label` sections that declare it, sorted by
+ * `order`. Each `label` entry is a group of its own, its heading then its
+ * entries; consecutive links share one group.
+ */
+export function convertSiteLayoutTreeToFooterItems(
+  siteLayoutTree: SiteLayoutTree | null | undefined,
+): NavigationMenuItem[][] {
+  if (!siteLayoutTree) {
+    return [];
+  }
+
+  const groups: NavigationMenuItem[][] = [];
+  for (const item of collectFooterEntries(siteLayoutTree)) {
+    const children = convertChildrenToItems(item);
+    if (item.type === "label") {
+      if (children.length > 0) groups.push(buildLabelGroup(item, children));
+    } else {
+      appendFooterLinks(groups, [buildNavigationItem(item, children)]);
+    }
+  }
+  return groups;
+}
+
+/**
+ * Adds `links` to the trailing group of `groups` when it holds links, or as a
+ * group of their own after a `label` group.
+ */
+export function appendFooterLinks(
+  groups: NavigationMenuItem[][],
+  links: NavigationMenuItem[],
+): NavigationMenuItem[][] {
+  if (links.length === 0) return groups;
+  const last = groups.at(-1);
+  if (last && last[0]?.type !== "label") {
+    last.push(...links);
+  } else {
+    groups.push(links);
+  }
+  return groups;
+}
+
+function collectFooterEntries(root: SiteLayoutTree): SiteLayoutTree[] {
+  const entries = root.childrenOrders.flatMap((nodeId): SiteLayoutTree[] => {
+    const item = root.children[nodeId]!;
+    if (isExcludedFromRoot(item)) return [];
+    if (isPinnedToFooter(item)) return [item];
+    if (item.type !== "label") return [];
+    return item.childrenOrders
+      .map((childId) => item.children[childId]!)
+      .filter(
+        (child) =>
+          isPinnedToFooter(child) &&
+          !child.isModuleRoot &&
+          child.hasAccess !== false,
+      );
+  });
+  return entries
+    .map((item, index) => ({ item, index }))
+    .sort(
+      (a, b) => (a.item.order ?? 0) - (b.item.order ?? 0) || a.index - b.index,
+    )
+    .map(({ item }) => item);
+}
+
+function convertChildrenToItems(
+  node: SiteLayoutTree,
+  admits: (item: SiteLayoutTree) => boolean = () => true,
+): NavigationMenuItem[] {
   return node.childrenOrders.flatMap((nodeId): NavigationMenuItem[] => {
     const item = node.children[nodeId]!;
 
-    if (item.isModuleRoot) {
+    if (item.isModuleRoot || !admits(item)) {
       return [];
     }
     if (item.hasAccess === false) {

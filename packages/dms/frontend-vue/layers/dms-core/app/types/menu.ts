@@ -21,6 +21,9 @@ export type MenuItemBadgeTone =
   | "error"
   | "info";
 
+/** Where the sidebar draws a first-level entry, mirroring `MenuPlacement` in the backend. */
+export type MenuPlacement = "menu" | "footer";
+
 /** Query parameters carried by a menu entry's link. */
 export type MenuItemQuery = Record<string, string>;
 

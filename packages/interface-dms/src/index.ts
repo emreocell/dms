@@ -79,6 +79,7 @@ export {
   MenuItemType,
   MenuItemVariant,
   MenuOptions,
+  MenuPlacement,
   ModuleCatalogContext,
   ModuleInfo,
   ModuleReadoutLine,
