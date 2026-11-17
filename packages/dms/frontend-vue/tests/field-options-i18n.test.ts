@@ -123,6 +123,7 @@ describe("processFieldI18n of a repeater column's placeholder rule", () => {
                 placeholderFrom: {
                   field: "unit",
                   map: { hour: "$per_hour", day: "600" },
+                  empty: "$no_unit",
                   fallback: "$any",
                 },
               },
@@ -139,6 +140,7 @@ describe("processFieldI18n of a repeater column's placeholder rule", () => {
           placeholderFrom: {
             field: "unit",
             map: { hour: "t($per_hour)", day: "600" },
+            empty: "t($no_unit)",
             fallback: "t($any)",
           },
         },

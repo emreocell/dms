@@ -68,7 +68,7 @@ function translatePlaceholderFrom(
   rule: JsonWritableObject,
   processI18n: Translate,
 ): JsonWritableObject {
-  const translated = translateTexts(rule, ["fallback"], processI18n);
+  const translated = translateTexts(rule, ["empty", "fallback"], processI18n);
   if (isJsonWritableObject(rule.map)) {
     translated.map = translateTexts(
       rule.map,

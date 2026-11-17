@@ -2,19 +2,25 @@ import { z } from "zod";
 import { adaptFieldValidationSchema, FormComponents } from "../form-schema";
 import { DefaultDataCompareTypes } from "./compare-types";
 import type { DefaultValue } from "../types";
+import { TEXT_PLACEHOLDER_INPUTS } from "../internal/repeater-placeholder";
 import { DataType, getDataTypeId, RegisterDataType } from "./core";
 
 /**
  * The placeholder of a field of an `ArrayType` row chosen by the value of
  * another field of the same row: `map` gives the placeholder per value of
- * the field `field` names (its value as text), `fallback` the one for any
- * other value or none. Without a match nor `fallback`, the field keeps the
- * placeholder of its type. Texts are i18n keys (`$…`) or literals.
+ * the field `field` names (its value as text), `empty` the one while that
+ * field holds no value, `fallback` the one for a value `map` lacks. Without
+ * `empty`, an empty field takes `fallback` too; without a match nor
+ * `fallback`, the field keeps the placeholder of its type. Texts are i18n
+ * keys (`$…`) or literals.
  */
 export interface ArrayItemPlaceholderFrom {
   /** Key of the other field of the row. */
   field: string;
   map: Record<string, string>;
+  /** While the other field holds no value (none, `""`, `[]`). */
+  empty?: string;
+  /** For a value of the other field that `map` has no entry for. */
   fallback?: string;
 }
 
@@ -33,12 +39,13 @@ export interface ArrayItemField {
   defaultValue?: DefaultValue;
   /**
    * The placeholder of this field read from another field of the same row:
-   * `{ field: "unit", map: { hour: "80", day: "600" }, fallback?: "…" }`.
-   * The value of `field`, as text, picks the entry of `map`; any other
-   * value, or none, takes `fallback`, and without it the placeholder of
-   * the field's type. Applies to the inputs showing a text placeholder (a
-   * text, email, phone, number, money, percentage, tags, select or relation
-   * input); any other input ignores it.
+   * `{ field: "unit", map: { hour: "80", day: "600" }, empty?, fallback? }`.
+   * The value of `field`, as text, picks the entry of `map`; no value takes
+   * `empty` (else `fallback`), a value `map` lacks takes `fallback`, and
+   * without them the field keeps the placeholder of its type. Applies to
+   * the inputs showing a text placeholder (a text, textarea, email, phone,
+   * number, percentage, tags, select or relation input); any other input
+   * ignores it, also when an `onFilter` writes the rule per request.
    */
   placeholderFrom?: ArrayItemPlaceholderFrom;
 }
@@ -148,22 +155,6 @@ const PRESENCE_COMPARE_MODES = [
   DefaultDataCompareTypes.IsEmpty,
   DefaultDataCompareTypes.IsNotEmpty,
 ];
-
-/**
- * The inputs whose placeholder is a text a repeater cell can pick from its
- * row (`ArrayItemField.placeholderFrom`): a date or time input's is a date.
- */
-const TEXT_PLACEHOLDER_INPUTS: ReadonlySet<string> = new Set([
-  "dms-input-text",
-  "dms-input-textarea",
-  "dms-input-email",
-  "dms-input-phone",
-  "dms-input-number",
-  "dms-input-percentage",
-  "dms-input-tags",
-  "dms-input-select",
-  "dms-input-relation",
-]);
 
 const INVALID_JSON_MESSAGE = "$dms.field_errors.invalid_json";
 

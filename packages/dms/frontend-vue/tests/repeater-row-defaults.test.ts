@@ -234,6 +234,43 @@ describe("repeaterCellPlaceholder", () => {
     expect(repeaterCellPlaceholder(rule, { unit: "toString" })).toBe("—");
   });
 
+  describe("tells an empty sibling from a value missing in the map", () => {
+    const map = { hour: "80" };
+    const empties = [undefined, null, "", []];
+
+    it("with neither empty nor fallback, keeps the cell's own", () => {
+      const only = { field: "unit", map };
+      expect(repeaterCellPlaceholder(only, { unit: "week" })).toBe(undefined);
+      for (const unit of empties)
+        expect(repeaterCellPlaceholder(only, { unit })).toBe(undefined);
+    });
+
+    it("with fallback alone, takes it in both cases", () => {
+      const only = { field: "unit", map, fallback: "—" };
+      expect(repeaterCellPlaceholder(only, { unit: "week" })).toBe("—");
+      for (const unit of empties)
+        expect(repeaterCellPlaceholder(only, { unit })).toBe("—");
+      expect(repeaterCellPlaceholder(only, {})).toBe("—");
+    });
+
+    it("with empty alone, takes it only for an empty sibling", () => {
+      const only = { field: "unit", map, empty: "80" };
+      expect(repeaterCellPlaceholder(only, { unit: "week" })).toBe(undefined);
+      expect(repeaterCellPlaceholder(only, { unit: ["week"] })).toBe(undefined);
+      for (const unit of empties)
+        expect(repeaterCellPlaceholder(only, { unit })).toBe("80");
+      expect(repeaterCellPlaceholder(only, {})).toBe("80");
+    });
+
+    it("with both, takes empty for an empty sibling, fallback for another value", () => {
+      const both = { field: "unit", map, empty: "80", fallback: "" };
+      expect(repeaterCellPlaceholder(both, { unit: "week" })).toBe("");
+      for (const unit of empties)
+        expect(repeaterCellPlaceholder(both, { unit })).toBe("80");
+      expect(repeaterCellPlaceholder(both, { unit: "hour" })).toBe("80");
+    });
+  });
+
   it("keeps the cell's own placeholder without a rule", () => {
     expect(repeaterCellPlaceholder(undefined, { unit: "hour" })).toBe(
       undefined,

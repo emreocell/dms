@@ -13,6 +13,9 @@ export type RepeaterRow = NonNullable<Parameters<DataTypeFormatter>[3]>;
 export interface RepeaterPlaceholderFrom {
   field: string;
   map: Record<string, string>;
+  /** When the other cell holds no value; `fallback` without it. */
+  empty?: string;
+  /** When the other cell holds a value `map` has no entry for. */
   fallback?: string;
 }
 
@@ -35,23 +38,36 @@ export function newRepeaterRow(columns: readonly NewRowColumn[]): RepeaterRow {
   return row;
 }
 
-/** The text a cell's value is looked up by in a `map`: a scalar's, not empty. */
+/** Whether a cell holds no value: nothing, an empty text or an empty list. */
+function isEmptyCell(value: RepeaterRow[string]): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (Array.isArray(value) && !value.length)
+  );
+}
+
+/** The text a cell's value is looked up by in a `map`: a scalar's. */
 function lookupKey(value: RepeaterRow[string]): string | undefined {
-  if (isString(value)) return value === "" ? undefined : value;
+  if (isString(value)) return value;
   if (isNumber(value) || isBoolean(value)) return String(value);
   return undefined;
 }
 
 /**
  * The placeholder `rule` picks in `row`: the entry of `map` for the text of
- * the other cell's value, else `fallback`; `undefined` keeps the cell's own.
+ * the other cell's value, `empty` (else `fallback`) when that cell holds no
+ * value, `fallback` for a value `map` lacks; `undefined` keeps the cell's own.
  */
 export function repeaterCellPlaceholder(
   rule: RepeaterPlaceholderFrom | undefined,
   row: RepeaterRow,
 ): string | undefined {
   if (!rule) return undefined;
-  const key = lookupKey(row[rule.field]);
+  const value = row[rule.field];
+  if (isEmptyCell(value)) return rule.empty ?? rule.fallback;
+  const key = lookupKey(value);
   if (key !== undefined && Object.hasOwn(rule.map, key)) return rule.map[key];
   return rule.fallback;
 }

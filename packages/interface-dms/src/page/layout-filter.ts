@@ -4,6 +4,7 @@ import type {
   ComponentFilterContext,
   ComponentInfoSerialized,
 } from "../component";
+import { withServedPlaceholderRules } from "../base/internal/repeater-placeholder";
 import { HasPermission } from "../permissions";
 import { isNull, isObject, isString } from "../utils/internal/type-check";
 import type { ComponentTreeNode } from "./component-tree";
@@ -35,11 +36,13 @@ async function filterComponentInfo(
 
   const component = componentMap.get(permissionId)?.component;
   if (component?.onFilterCallback && filtered.options) {
-    filtered.options = await component.onFilterCallback(
-      permissions,
-      filtered.options,
-      permissionId,
-      context,
+    filtered.options = withServedPlaceholderRules(
+      await component.onFilterCallback(
+        permissions,
+        filtered.options,
+        permissionId,
+        context,
+      ),
     );
   }
 
