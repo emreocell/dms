@@ -1,6 +1,7 @@
 import { PageController, RegisterPage } from "@antelopejs/interface-dms/page";
 import { DefaultDataTypes } from "@antelopejs/interface-dms/base/data-types/default-types";
 import { Form } from "@antelopejs/interface-dms/base/form";
+import { withRepeaterPlaceholderFrom } from "@antelopejs/interface-dms/base/repeater-options";
 import { FormPageLayout } from "@antelopejs/interface-dms/base/layouts";
 import { StatusType } from "@antelopejs/interface-dms/base/data-types/status-type";
 import { pageCategory } from "../category";
@@ -33,6 +34,11 @@ const UNIT_ITEMS = [
   { label: "Day", value: "day" },
   { label: "Piece", value: "piece" },
 ];
+
+/** The unit price hints of a tenant: what a per-request rate lookup returns. */
+function unitRates(tenantId: string): Record<string, string> {
+  return tenantId === "default" ? { hour: "80", day: "600" } : { hour: "95" };
+}
 
 const QUERY_COMPLETIONS = [
   { label: "orders", detail: "1,284 rows", icon: "i-ph-table" },
@@ -197,7 +203,7 @@ export class PageFormFieldTypes extends PageController(
             id: "lines",
             label: "Lines",
             description:
-              "A new line starts at 1 hour; the price hint follows the unit",
+              "A new line starts at 1 hour; the price hint follows the unit, and an empty unit shows the hourly rate",
             type: new DefaultDataTypes.ArrayType({
               of: {
                 description: {
@@ -224,6 +230,7 @@ export class PageFormFieldTypes extends PageController(
                   placeholderFrom: {
                     field: "unit",
                     map: { hour: "80", day: "600" },
+                    empty: "80",
                   },
                 },
               },
@@ -417,5 +424,13 @@ export class PageFormFieldTypes extends PageController(
         ],
       },
     ],
+  }).onFilter((_permissions, options, _permissionId, context) => {
+    const rates = unitRates(context.tenantId);
+    return withRepeaterPlaceholderFrom(
+      options,
+      "lines",
+      "unitPrice",
+      (declared) => declared && { ...declared, map: rates, empty: rates.hour },
+    );
   });
 }

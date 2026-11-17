@@ -67,6 +67,12 @@ export const typeFeatures: PlaygroundFeature[] = [
   },
   {
     area: AREA,
+    feature: "Repeater placeholder rule resolved per request",
+    api: "Form().onFilter(withRepeaterPlaceholderFrom(options, field, column, resolve))",
+    demo: FIELD_TYPES,
+  },
+  {
+    area: AREA,
     feature: "Repeater of one bare type",
     api: "ArrayType({ of: { url: new UrlType() } })",
     demo: FIELD_TYPES,
