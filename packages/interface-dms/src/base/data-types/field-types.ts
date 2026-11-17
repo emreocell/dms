@@ -2,7 +2,7 @@ import { z } from "zod";
 import { adaptFieldValidationSchema, FormComponents } from "../form-schema";
 import { DefaultDataCompareTypes } from "./compare-types";
 import type { DefaultValue } from "../types";
-import { TEXT_PLACEHOLDER_INPUTS } from "../internal/repeater-placeholder";
+import { TEXT_PLACEHOLDER_INPUTS } from "../../component-options/internal/repeater-placeholder";
 import { DataType, getDataTypeId, RegisterDataType } from "./core";
 
 /**

@@ -4,7 +4,7 @@ import type {
   ComponentFilterContext,
   ComponentInfoSerialized,
 } from "../component";
-import { withServedPlaceholderRules } from "../base/internal/repeater-placeholder";
+import { withServedPlaceholderRules } from "../component-options/internal/repeater-placeholder";
 import { HasPermission } from "../permissions";
 import { isNull, isObject, isString } from "../utils/internal/type-check";
 import type { ComponentTreeNode } from "./component-tree";
