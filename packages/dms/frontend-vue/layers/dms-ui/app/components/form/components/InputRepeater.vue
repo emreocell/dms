@@ -2,6 +2,7 @@
 import type { ComponentInfo } from "#dms-core/app/types/page";
 import { EYEBROW_CLASS } from "../../../build/utils/eyebrow";
 import {
+  formBusInjectionKey,
   formErrorsInjectionKey,
   formInputsInjectionKey,
   useFormField,
@@ -16,6 +17,10 @@ import {
   type RepeaterPlaceholderFrom,
   type RepeaterRow,
 } from "../../../build/composables/form/repeaterRows";
+import {
+  repeaterRowErrorName,
+  repeaterRowsPattern,
+} from "../../../build/composables/form/repeaterRowErrors";
 
 /** A field of the rows: one column. */
 interface RepeaterColumn {
@@ -47,7 +52,8 @@ const props = defineProps<RepeaterProps>();
 const model = defineModel<RepeaterRow[] | null | undefined>();
 const { t } = useI18n();
 
-const { name: fieldName, emitFormChange } = useFormField();
+const { name: fieldName } = useFormField();
+const formBus = inject(formBusInjectionKey, null);
 const formErrors = inject(formErrorsInjectionKey, null);
 const formInputs = inject(formInputsInjectionKey, null);
 const markFieldSaved = inject(FORM_FIELD_SAVED_KEY, null);
@@ -106,14 +112,56 @@ const gridTemplate = computed(() => ({
   "--dms-repeater-stacked-columns": rowTemplate([FLUID_COLUMN]),
 }));
 
+/** The keys of the rows the user edited: only their cells are checked. */
+const editedRows = new Set<number>();
+
+/** The name the field's row-scoped validations go under. */
+function rowsScopeName(name: string): string {
+  return `${name}.$rows`;
+}
+
 /**
- * Sets the rows; `shouldValidate: false` leaves the form's validation alone: a row
- * just added is empty, and is only checked once filled or on submit, never
- * flagged "required" the moment it appears.
+ * Checks the field's own errors and the cells of the edited rows, never a
+ * row nobody touched: a row added, or opened with to reach `min`, waits for
+ * an edit or the submit. The scope is a form input of its own whose pattern
+ * names those rows, so UForm replaces their errors and keeps the others.
  */
-function emitRows(next: RepeaterRow[], shouldValidate = true): void {
+function validateEditedRows(): void {
+  const name = fieldName.value;
+  if (!name || !formBus || !formInputs) return;
+  const edited = rowKeys.value.flatMap((key, index) =>
+    editedRows.has(key) ? [index] : [],
+  );
+  const scope = rowsScopeName(name);
+  formInputs.value[scope] = {
+    id: scope,
+    pattern: repeaterRowsPattern(name, edited),
+  };
+  formBus.emit({ type: "change", name: scope });
+}
+
+/**
+ * Moves the errors shown under the rows to the index each row now holds,
+ * from the row keys before the change: an error stays with its row when a
+ * row above it is removed or moved, and a removed row's errors go with it.
+ */
+function moveRowErrors(keysBefore: readonly number[]): void {
+  const name = fieldName.value;
+  if (!name || !formErrors) return;
+  const moved = formErrors.value.flatMap((error) => {
+    const renamed = repeaterRowErrorName(name, error.name, (index) =>
+      rowKeys.value.indexOf(keysBefore[index] ?? -1),
+    );
+    if (renamed === null) return [];
+    if (renamed === error.name) return [error];
+    return [{ ...error, name: renamed, id: renamed }];
+  });
+  formErrors.value.splice(0, formErrors.value.length, ...moved);
+}
+
+/** Sets the rows without checking them: a cell edit or a move checks next. */
+function emitRows(next: RepeaterRow[]): void {
   model.value = next;
-  if (shouldValidate) emitFormChange();
 }
 
 function setCell(
@@ -121,11 +169,14 @@ function setCell(
   column: string,
   value: RepeaterRow[string],
 ): void {
+  const key = rowKeys.value[index];
+  if (key !== undefined) editedRows.add(key);
   emitRows(
     rows.value.map((row, at) =>
       at === index ? { ...row, [column]: value } : row,
     ),
   );
+  validateEditedRows();
 }
 
 function newRow(): RepeaterRow {
@@ -134,7 +185,7 @@ function newRow(): RepeaterRow {
 
 function addRow(): void {
   rowKeys.value.push(nextKey++);
-  emitRows([...rows.value, newRow()], false);
+  emitRows([...rows.value, newRow()]);
 }
 
 /**
@@ -150,15 +201,19 @@ watch(
       ...rows.value,
       ...Array.from({ length: missing }, () => newRow()),
     ];
-    emitRows(next, false);
+    emitRows(next);
     if (props.id) markFieldSaved?.(props.id, next);
   },
   { immediate: true },
 );
 
 function removeRow(index: number): void {
-  rowKeys.value.splice(index, 1);
+  const keysBefore = [...rowKeys.value];
+  const [key] = rowKeys.value.splice(index, 1);
+  if (key !== undefined) editedRows.delete(key);
   emitRows(rows.value.filter((_, at) => at !== index));
+  moveRowErrors(keysBefore);
+  validateEditedRows();
 }
 
 function moveRow(from: number, to: number): void {
@@ -166,9 +221,12 @@ function moveRow(from: number, to: number): void {
   const next = [...rows.value];
   const [row] = next.splice(from, 1);
   next.splice(to, 0, row!);
+  const keysBefore = [...rowKeys.value];
   const [key] = rowKeys.value.splice(from, 1);
   rowKeys.value.splice(to, 0, key!);
   emitRows(next);
+  moveRowErrors(keysBefore);
+  validateEditedRows();
 }
 
 type MoveKeys = Record<KeyboardEvent["key"], number>;
@@ -218,7 +276,10 @@ watch(
   },
   { immediate: true },
 );
-onBeforeUnmount(() => unregisterCells(registered));
+onBeforeUnmount(() => {
+  unregisterCells(registered);
+  if (fieldName.value) unregisterCells([rowsScopeName(fieldName.value)]);
+});
 
 /** A cell's options, with the placeholder its row picks. */
 function cellOptions(column: RepeaterColumn, row: RepeaterRow) {

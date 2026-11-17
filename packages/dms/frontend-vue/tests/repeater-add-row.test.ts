@@ -2,7 +2,7 @@
 /**
  * A row added to an array field is empty: it is checked once its cells are
  * filled or the form is submitted, never flagged "required" the moment it
- * appears. Changing, moving or removing a row validates the field as before.
+ * appears. Removing a row checks the field and the rows edited so far.
  *
  * A read-only array field shows its rows and nothing to change them with.
  */
@@ -22,6 +22,7 @@ import {
 import {
   formBusInjectionKey,
   formFieldInjectionKey,
+  formInputsInjectionKey,
 } from "@nuxt/ui/composables/useFormField";
 import type { FormEvent } from "@nuxt/ui";
 import { useEventBus } from "@vueuse/core";
@@ -95,6 +96,7 @@ async function mount(
   const bus = useEventBus<FormEvent<object>, string>(Symbol("form-bus"));
   bus.on((event) => events.push(event.type));
   app.provide(formBusInjectionKey, bus);
+  app.provide(formInputsInjectionKey, ref({}));
   app.provide(
     formFieldInjectionKey,
     computed(() => ({ name: "contacts", ariaId: "contacts-field" })),

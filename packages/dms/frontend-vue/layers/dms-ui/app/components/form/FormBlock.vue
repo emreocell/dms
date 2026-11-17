@@ -31,6 +31,7 @@ import { formatRecordLabel } from "../../build/composables/table-view/utils/form
 import {
   FORM_ENTRY_CONTEXT_KEY,
   fieldErrorPattern,
+  shownErrorNames,
 } from "../../build/composables/form/formEntryContext";
 import {
   CONTAINER_LAYOUT_CLASSES,
@@ -147,9 +148,11 @@ const { localizedSchema, errorNames, clearServerErrors } =
     },
     revalidateChangedField(field) {
       if (!form.value || serverErrors.has(field.id)) return;
-      const pattern = fieldErrorPattern(field.id);
-      if (!form.value.getErrors(pattern).length) return;
-      void form.value.validate({ name: errorNames(field), silent: true });
+      const shown = shownErrorNames(
+        form.value.getErrors(fieldErrorPattern(field.id)),
+      );
+      if (!shown.length) return;
+      void form.value.validate({ name: shown, silent: true });
     },
   });
 

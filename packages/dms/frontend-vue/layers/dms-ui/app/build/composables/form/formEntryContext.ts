@@ -61,3 +61,16 @@ export function escapeRegExp(text: string): string {
 export function fieldErrorPattern(id: string): RegExp {
   return new RegExp(`^${escapeRegExp(id)}(\\.|$)`);
 }
+
+/**
+ * The names of the errors shown, each once: what a changed field checks
+ * again, so a fixed value clears its error without flagging a part nobody
+ * touched (another row of a repeater).
+ */
+export function shownErrorNames(
+  errors: readonly { name?: string }[],
+): string[] {
+  return [
+    ...new Set(errors.flatMap((error) => (error.name ? [error.name] : []))),
+  ];
+}
